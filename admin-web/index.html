@@ -396,7 +396,9 @@ input:checked+.sl::before{transform:translateX(19px)}
 </div></main></div>
 <div id="toast"></div>
 <script>
-const BASE = 'https://kam-jodo.vercel.app';
+const BASE = (window.location.origin.includes('localhost') || window.location.origin.includes('127.0.0.1'))
+  ? 'http://localhost:4000'
+  : window.location.origin;
 const PAGES=['dashboard','users','categories','settings'];
 async function checkBackendMode(){
   try{
