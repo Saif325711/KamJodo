@@ -119,6 +119,29 @@ async function getMyPosts(req, res, next) {
 }
 
 /**
+ * GET /api/v1/worker-posts
+ * Public — get all active worker posts for feed
+ */
+async function getAllPosts(req, res, next) {
+  try {
+    if (getIsConnected()) {
+      const posts = await WorkerPost.find({ status: 'active' })
+        .sort({ createdAt: -1 })
+        .populate('categoryId', 'name iconKey')
+        .lean();
+      return res.json({ success: true, data: posts });
+    } else {
+      const posts = Array.from(localPosts.values())
+        .filter(p => p.status === 'active')
+        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      return res.json({ success: true, data: posts });
+    }
+  } catch (error) {
+    next(error);
+  }
+}
+
+/**
  * GET /api/v1/workers/:workerId/posts
  * Public — get active posts for a worker
  */
@@ -236,4 +259,4 @@ async function updatePostStatus(req, res, next) {
   }
 }
 
-module.exports = { createPost, getMyPosts, getWorkerPosts, getPost, updatePost, updatePostStatus };
+module.exports = { createPost, getMyPosts, getAllPosts, getWorkerPosts, getPost, updatePost, updatePostStatus };

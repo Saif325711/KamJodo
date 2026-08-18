@@ -93,7 +93,7 @@ class _LoginScreenState extends State<LoginScreen> {
         foregroundColor: Colors.white,
         elevation: 0,
         title: Text(
-          '$roleEmoji $roleLabel Login',
+          'KamJodo — Hire Workers 🙋',
           style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
         ),
       ),
@@ -106,7 +106,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
             // ── Heading ────────────────────────────────────────────────────
             Text(
-              'Welcome to KamJodo',
+              'Create Account / Login',
               style: GoogleFonts.poppins(
                 fontSize: 26,
                 fontWeight: FontWeight.w700,
@@ -116,7 +116,7 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              'Enter your name and any password to continue',
+              'Enter your name and password to find & hire skilled workers',
               style: GoogleFonts.poppins(
                 fontSize: 14,
                 color: const Color(0xFF777777),

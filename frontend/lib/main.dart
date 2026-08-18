@@ -65,10 +65,11 @@ class _KamJodoAppState extends State<KamJodoApp> {
             tertiary: _theme.tertiary,
           );
         }
-        return RoleSelectionScreen(
+        return LoginScreen(
           primary: _theme.primary,
           secondary: _theme.secondary,
           tertiary: _theme.tertiary,
+          role: 'customer',
         );
       },
     );
