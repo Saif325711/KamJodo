@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>KamJodo — Admin Panel</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --p:#7A0000;--s:#B31217;--t:#FF5F6D;
+  --bg:#F4F5F7;--card:#fff;--border:#E6E8EC;
+  --text:#0F0F0F;--muted:#6B7280;
+  --ok:#16A34A;--ok-bg:#DCFCE7;
+  --warn:#B45309;--warn-bg:#FEF3C7;
+  --err:#B31217;--err-bg:#FEE2E2;
+  --r:14px;--sh:0 1px 3px rgba(0,0,0,.06),0 4px 16px rgba(0,0,0,.06);
+  --sw:272px;
+}
+html,body{height:100%;font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased}
+button,input,select{font-family:inherit}
+.shell{display:flex;height:100vh;overflow:hidden}
+.sidebar{
+  width:var(--sw);min-width:var(--sw);
+  background:linear-gradient(170deg,#FF7A85 0%,#C41017 35%,#7A0000 70%,#3D0000 100%);
+  display:flex;flex-direction:column;overflow:hidden;
+  position:relative;z-index:10;
+  box-shadow:4px 0 24px rgba(122,0,0,.25);
+}
+.sb-inner{display:flex;flex-direction:column;height:100%;padding:24px 16px;position:relative;overflow-y:auto}
+.sb-brand{padding:4px 6px 22px}
+.sb-brand h1{color:#fff;font-size:21px;font-weight:900;letter-spacing:-.4px}
+.sb-brand p{color:rgba(255,255,255,.55);font-size:11.5px;line-height:1.55;margin-top:5px}
+.sb-stats{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:22px}
+.sb-stat{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.18);border-radius:12px;padding:11px 12px}
+.sb-stat .v{color:#fff;font-size:19px;font-weight:800;line-height:1}
+.sb-stat .l{color:rgba(255,255,255,.6);font-size:11px;margin-top:3px}
+.sb-sep{height:1px;background:rgba(255,255,255,.12);margin:0 4px 14px}
+.sb-label{color:rgba(255,255,255,.38);font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:0 8px 8px}
+.nav{display:flex;flex-direction:column;gap:3px;flex:1}
+.nav-btn{
+  display:flex;align-items:center;gap:11px;padding:11px 12px;border-radius:11px;cursor:pointer;
+  color:rgba(255,255,255,.75);font-weight:600;font-size:13.5px;
+  transition:background .16s,color .16s;border:none;background:transparent;text-align:left;width:100%;
+}
+.nav-btn .mi{font-size:19px;transition:transform .2s}
+.nav-btn:hover{background:rgba(255,255,255,.1);color:#fff}
+.nav-btn.active{background:rgba(255,255,255,.18);color:#fff;box-shadow:0 2px 8px rgba(0,0,0,.15)}
+.nav-btn.active .mi{transform:scale(1.1)}
+.nav-pip{width:6px;height:6px;background:#fff;border-radius:50%;margin-left:auto;opacity:0;transition:opacity .2s;flex-shrink:0}
+.nav-btn.active .nav-pip{opacity:1}
+.nav-badge{margin-left:auto;background:rgba(255,255,255,.25);color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:999px;min-width:20px;text-align:center;flex-shrink:0}
+.sb-footer{padding:14px 8px 4px;color:rgba(255,255,255,.3);font-size:11px}
+.main{flex:1;overflow-y:auto;background:var(--bg)}
+.main-inner{padding:32px 36px;max-width:1400px}
+.page{display:none}
+.page.active{display:block;animation:fadeUp .22s ease}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.ph{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:4px;flex-wrap:wrap}
+.ph-title{font-size:27px;font-weight:900;letter-spacing:-.5px;line-height:1.1}
+.ph-sub{color:var(--muted);font-size:13.5px;margin-bottom:26px;line-height:1.5}
+.card{background:var(--card);border-radius:var(--r);box-shadow:var(--sh);padding:22px}
+.stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px}
+@media(max-width:1100px){.stat-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:600px){.stat-grid{grid-template-columns:1fr}}
+.stat-card{background:var(--card);border-radius:var(--r);box-shadow:var(--sh);padding:18px 20px;display:flex;align-items:center;gap:14px;transition:transform .15s,box-shadow .15s;cursor:pointer}
+.stat-card:hover{transform:translateY(-2px);box-shadow:0 4px 24px rgba(0,0,0,.1)}
+.stat-ic{width:46px;height:46px;border-radius:13px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:22px}
+.stat-v{font-size:25px;font-weight:900;line-height:1;letter-spacing:-.5px}
+.stat-l{font-size:12px;color:var(--muted);margin-top:3px;font-weight:500}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:820px){.two-col{grid-template-columns:1fr}}
+.panel-title{font-size:15px;font-weight:700;margin-bottom:14px;color:var(--text)}
+.act-tile{display:flex;align-items:center;gap:13px;background:#FAFAFA;border:1.5px solid var(--border);border-radius:12px;padding:13px 14px;cursor:pointer;transition:border-color .15s,box-shadow .15s;margin-bottom:8px}
+.act-tile:last-child{margin-bottom:0}
+.act-tile:hover{border-color:var(--s);box-shadow:0 2px 12px rgba(179,18,23,.08)}
+.act-ic{width:40px;height:40px;border-radius:11px;background:#FEE2E2;display:flex;align-items:center;justify-content:center;color:var(--s);flex-shrink:0;font-size:20px}
+.act-title{font-weight:700;font-size:13.5px}
+.act-sub{font-size:12px;color:var(--muted);margin-top:1px}
+.act-arr{margin-left:auto;color:var(--s);font-size:18px!important}
+.tog-row{display:flex;align-items:center;gap:12px;background:#FAFAFA;border:1.5px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:8px;transition:border-color .15s}
+.tog-row:last-child{margin-bottom:0}
+.tog-row:hover{border-color:#d1d5db}
+.tog-row span{flex:1;font-size:13.5px;font-weight:500}
+.sw{position:relative;display:inline-block;width:42px;height:23px;flex-shrink:0}
+.sw input{opacity:0;width:0;height:0}
+.sl{position:absolute;inset:0;background:#D1D5DB;border-radius:23px;cursor:pointer;transition:.2s}
+.sl::before{content:'';position:absolute;width:17px;height:17px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.2s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+input:checked+.sl{background:var(--s)}
+input:checked+.sl::before{transform:translateX(19px)}
+.fg{margin-bottom:13px}
+.fg label{display:block;font-size:12px;font-weight:700;color:var(--muted);margin-bottom:5px;text-transform:uppercase;letter-spacing:.04em}
+.fg input,.fg select{width:100%;padding:10px 13px;border:1.5px solid var(--border);border-radius:10px;font-size:13.5px;color:var(--text);background:#fff;outline:none;transition:border-color .15s,box-shadow .15s}
+.fg input:focus,.fg select:focus{border-color:var(--s);box-shadow:0 0 0 3px rgba(179,18,23,.08)}
+.fg input::placeholder{color:#C0C4CC}
+.fg-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+@media(max-width:680px){.fg-row{grid-template-columns:1fr}}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border-radius:10px;font-size:13.5px;font-weight:700;cursor:pointer;border:none;transition:opacity .15s,transform .1s,box-shadow .15s;letter-spacing:-.01em}
+.btn:hover{opacity:.88}
+.btn:active{transform:scale(.97)}
+.btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.btn .mi{font-size:17px}
+.btn-primary{background:linear-gradient(135deg,var(--p),var(--s));color:#fff;box-shadow:0 2px 8px rgba(179,18,23,.3)}
+.btn-primary:not(:disabled):hover{box-shadow:0 4px 16px rgba(179,18,23,.4)}
+.btn-ghost{background:transparent;border:1.5px solid var(--border);color:var(--text)}
+.btn-ghost:hover{border-color:#9CA3AF}
+.btn-ok{background:#16A34A;color:#fff;box-shadow:0 2px 8px rgba(22,163,74,.25)}
+.btn-sm{padding:6px 13px;font-size:12.5px;border-radius:8px}
+.cat-grid{display:flex;flex-wrap:wrap;gap:10px}
+.cat-chip{display:inline-flex;align-items:center;gap:9px;padding:8px 8px 8px 14px;border-radius:999px;background:linear-gradient(135deg,var(--p),var(--t));color:#fff;font-weight:700;font-size:13px;animation:popIn .2s ease}
+@keyframes popIn{from{opacity:0;transform:scale(.85)}to{opacity:1;transform:none}}
+.cat-av{width:24px;height:24px;border-radius:50%;background:rgba(255,255,255,.88);display:flex;align-items:center;justify-content:center;color:var(--s);flex-shrink:0;overflow:hidden}
+.cat-av img{width:100%;height:100%;object-fit:cover}
+.cat-av .mi{font-size:13px}
+.cat-del{width:24px;height:24px;border-radius:50%;background:rgba(255,255,255,.2);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#fff;transition:background .15s;margin-left:2px}
+.cat-del:hover{background:rgba(255,255,255,.35)}
+.cat-del .mi{font-size:14px!important}
+.search-bar{display:flex;align-items:center;gap:10px;background:#fff;border:1.5px solid var(--border);border-radius:11px;padding:0 13px;margin-bottom:16px;transition:border-color .15s,box-shadow .15s}
+.search-bar:focus-within{border-color:var(--s);box-shadow:0 0 0 3px rgba(179,18,23,.08)}
+.search-bar .mi{color:var(--muted);font-size:19px}
+.search-bar input{flex:1;border:none;outline:none;padding:10px 0;font-size:13.5px;background:transparent}
+.user-card{background:var(--card);border-radius:var(--r);box-shadow:var(--sh);padding:18px 20px;display:flex;align-items:center;gap:16px;margin-bottom:12px;transition:transform .15s}
+.user-card:hover{transform:translateY(-1px)}
+.u-av{width:50px;height:50px;border-radius:50%;background:#FEE2E2;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:900;color:var(--s);flex-shrink:0;border:2px solid rgba(179,18,23,.15)}
+.u-name{font-size:15px;font-weight:700}
+.u-role{font-size:12.5px;color:var(--muted);margin-top:2px}
+.u-right{margin-left:auto;display:flex;flex-direction:column;align-items:flex-end;gap:10px;flex-shrink:0}
+.badge{display:inline-block;padding:3px 11px;border-radius:999px;font-size:11.5px;font-weight:700}
+.badge-pending{background:var(--warn-bg);color:var(--warn)}
+.badge-verified{background:var(--ok-bg);color:var(--ok)}
+.badge-rejected{background:var(--err-bg);color:var(--err)}
+.swatches{display:flex;gap:8px;margin-bottom:14px}
+.swatch{flex:1;height:44px;border-radius:11px;border:2px solid rgba(0,0,0,.06);transition:background .3s,transform .15s;cursor:default;position:relative}
+.swatch-label{position:absolute;bottom:-18px;left:50%;transform:translateX(-50%);font-size:10px;font-weight:600;color:var(--muted);white-space:nowrap}
+.empty{text-align:center;padding:48px 24px;color:var(--muted)}
+.empty .mi{font-size:52px;opacity:.25;margin-bottom:12px;display:block}
+.empty p{font-size:14px}
+.divider{height:1px;background:var(--border);margin:18px 0}
+#toast{position:fixed;bottom:28px;right:28px;z-index:9999;background:#1F2937;color:#fff;padding:12px 20px;border-radius:12px;font-size:13.5px;font-weight:600;box-shadow:0 8px 24px rgba(0,0,0,.2);opacity:0;transform:translateY(10px);transition:all .22s;pointer-events:none;max-width:340px}
+#toast.ok{background:#15803D}
+#toast.err{background:#B91C1C}
+#toast.show{opacity:1;transform:none}
+.spin{width:16px;height:16px;border:2.5px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:rot .65s linear infinite;display:inline-block;flex-shrink:0}
+@keyframes rot{to{transform:rotate(360deg)}}
+.sec-label{font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.07em;text-transform:uppercase;margin-bottom:10px}
+.skel{background:linear-gradient(90deg,#F0F0F0 25%,#E8E8E8 50%,#F0F0F0 75%);background-size:200%;animation:shimmer 1.4s infinite;border-radius:8px}
+@keyframes shimmer{0%{background-position:200%}100%{background-position:-200%}}
+@media(max-width:900px){.sidebar{display:none}.main-inner{padding:20px}}
+</style>
+</head>
+<body>
+<div class="shell">
+<aside class="sidebar">
+  <div class="sb-inner">
+    <div class="sb-brand">
+      <h1>KamJodo</h1>
+      <p>ERP Admin — Manage users, categories &amp; frontend from one place.</p>
+    </div>
+    <div class="sb-stats">
+      <div class="sb-stat"><div class="v">12</div><div class="l">Pending</div></div>
+      <div class="sb-stat"><div class="v" id="sb-count">—</div><div class="l">Categories</div></div>
+    </div>
+    <div class="sb-sep"></div>
+    <div class="sb-label">Navigation</div>
+    <nav class="nav">
+      <button class="nav-btn active" id="nb-dashboard" onclick="goTo('dashboard')">
+        <span class="material-icons-round mi">space_dashboard</span>Dashboard<span class="nav-pip"></span>
+      </button>
+      <button class="nav-btn" id="nb-users" onclick="goTo('users')">
+        <span class="material-icons-round mi">verified_user</span>User Verification
+        <span class="nav-badge" id="nb-badge">12</span>
+      </button>
+      <button class="nav-btn" id="nb-categories" onclick="goTo('categories')">
+        <span class="material-icons-round mi">category</span>Categories<span class="nav-pip"></span>
+      </button>
+      <button class="nav-btn" id="nb-settings" onclick="goTo('settings')">
+        <span class="material-icons-round mi">settings</span>Settings<span class="nav-pip"></span>
+      </button>
+    </nav>
+    <div style="flex:1"></div>
+    <div class="sb-footer">KamJodo ERP v1.0 &nbsp;·&nbsp; Admin Panel</div>
+  </div>
+</aside>
+
+<main class="main">
+<div class="main-inner">
+
+<!-- DASHBOARD -->
+<section class="page active" id="page-dashboard">
+  <div class="ph">
+    <div class="ph-title">Dashboard</div>
+    <button class="btn btn-primary" onclick="syncAll()"><span class="material-icons-round mi">sync</span> Sync</button>
+  </div>
+  <p class="ph-sub">Welcome back! Here's what's happening with KamJodo today.</p>
+  <div class="stat-grid">
+    <div class="stat-card" onclick="goTo('users')">
+      <div class="stat-ic" style="background:#FEE2E2;color:#B31217"><span class="material-icons-round">people_alt</span></div>
+      <div><div class="stat-v">2,480</div><div class="stat-l">Total Users</div></div>
+    </div>
+    <div class="stat-card" onclick="goTo('users')">
+      <div class="stat-ic" style="background:#FEF3C7;color:#B45309"><span class="material-icons-round">pending_actions</span></div>
+      <div><div class="stat-v">12</div><div class="stat-l">Pending Verify</div></div>
+    </div>
+    <div class="stat-card" onclick="goTo('categories')">
+      <div class="stat-ic" style="background:#EDE9FE;color:#7A0000"><span class="material-icons-round">category</span></div>
+      <div><div class="stat-v" id="dash-count">—</div><div class="stat-l">Categories</div></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-ic" style="background:#DBEAFE;color:#1D4ED8"><span class="material-icons-round">dynamic_feed</span></div>
+      <div><div class="stat-v">43</div><div class="stat-l">Active Content</div></div>
+    </div>
+  </div>
+  <div class="two-col">
+    <div class="card">
+      <div class="panel-title">Quick Actions</div>
+      <div class="act-tile" onclick="goTo('users')">
+        <div class="act-ic"><span class="material-icons-round">person_search</span></div>
+        <div><div class="act-title">Review pending users</div><div class="act-sub">Verify, reject, or flag incoming users.</div></div>
+        <span class="material-icons-round act-arr">chevron_right</span>
+      </div>
+      <div class="act-tile" onclick="goTo('categories')">
+        <div class="act-ic"><span class="material-icons-round">add_circle</span></div>
+        <div><div class="act-title">Add new category</div><div class="act-sub">Create service categories for the app.</div></div>
+        <span class="material-icons-round act-arr">chevron_right</span>
+      </div>
+      <div class="act-tile" onclick="goTo('settings')">
+        <div class="act-ic"><span class="material-icons-round">palette</span></div>
+        <div><div class="act-title">Update theme</div><div class="act-sub">Change app title and color scheme.</div></div>
+        <span class="material-icons-round act-arr">chevron_right</span>
+      </div>
+    </div>
+    <div class="card">
+      <div class="panel-title">Frontend Controls</div>
+      <div class="tog-row"><span>Enable featured banner</span><label class="sw"><input type="checkbox" checked><span class="sl"></span></label></div>
+      <div class="tog-row"><span>Show verified badges</span><label class="sw"><input type="checkbox" checked><span class="sl"></span></label></div>
+      <div class="tog-row"><span>Allow new categories</span><label class="sw"><input type="checkbox" checked><span class="sl"></span></label></div>
+      <div class="tog-row"><span>Publish app notice</span><label class="sw"><input type="checkbox"><span class="sl"></span></label></div>
+    </div>
+  </div>
+</section>
+
+<!-- USER VERIFICATION -->
+<section class="page" id="page-users">
+  <div class="ph">
+    <div class="ph-title">User Verification</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn btn-ghost btn-sm" id="uf-all"      onclick="filterUsers('all')">All</button>
+      <button class="btn btn-ghost btn-sm" id="uf-pending"  onclick="filterUsers('pending')">Pending</button>
+      <button class="btn btn-ghost btn-sm" id="uf-verified" onclick="filterUsers('verified')">Verified</button>
+      <button class="btn btn-ghost btn-sm" id="uf-rejected" onclick="filterUsers('rejected')">Rejected</button>
+    </div>
+  </div>
+  <p class="ph-sub">Review incoming users and approve them for the KamJodo platform.</p>
+  <div id="users-list"></div>
+</section>
+
+<!-- CATEGORIES -->
+<section class="page" id="page-categories">
+  <div class="ph">
+    <div class="ph-title">Categories</div>
+    <button class="btn btn-ghost btn-sm" onclick="loadCategories()"><span class="material-icons-round mi">refresh</span> Refresh</button>
+  </div>
+  <p class="ph-sub">Add and manage service categories displayed in the KamJodo frontend app.</p>
+  <div class="card" style="margin-bottom:18px">
+    <div class="panel-title">Add Category</div>
+    <div class="fg">
+      <label>Category Name</label>
+      <input id="cn" type="text" placeholder="e.g. Cook, Carpenter, Painter…" onkeydown="if(event.key==='Enter')addCat()"/>
+    </div>
+    <div class="fg-row">
+      <div class="fg">
+        <label>Icon</label>
+        <select id="ci">
+          <option value="taxi">Driver / Taxi</option>
+          <option value="plumbing">Plumber</option>
+          <option value="electric">Electrician</option>
+          <option value="tools">Mechanic</option>
+          <option value="school">Teacher</option>
+          <option value="more">Other</option>
+        </select>
+      </div>
+      <div class="fg" style="grid-column:span 2">
+        <label>Image URL (optional)</label>
+        <input id="cimg" type="url" placeholder="https://…"/>
+      </div>
+    </div>
+    <div style="display:flex;justify-content:flex-end">
+      <button class="btn btn-primary" id="cat-btn" onclick="addCat()">
+        <span class="material-icons-round mi">add</span> Add Category
+      </button>
+    </div>
+  </div>
+  <div class="sec-label" id="cat-count-label">Loading…</div>
+  <div class="search-bar" id="cat-search-bar" style="display:none">
+    <span class="material-icons-round">search</span>
+    <input type="text" id="cat-search" placeholder="Search categories…" oninput="renderCategories()"/>
+  </div>
+  <div id="cat-wrap" class="cat-grid"></div>
+</section>
+
+<!-- SETTINGS -->
+<section class="page" id="page-settings">
+  <div class="ph">
+    <div class="ph-title">Settings</div>
+    <button class="btn btn-ghost btn-sm" onclick="loadTheme()"><span class="material-icons-round mi">refresh</span> Reload</button>
+  </div>
+  <p class="ph-sub">Update the frontend app's title, colors, and moderation preferences.</p>
+  <div class="card" style="margin-bottom:16px">
+    <div class="panel-title">App Theme &amp; Colors</div>
+
+    <!-- App Title -->
+    <div class="fg"><label>App Title</label><input id="st" type="text" placeholder="KamJodo"/></div>
+
+    <!-- Live gradient preview -->
+    <div style="margin-bottom:18px">
+      <div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px">Live Preview</div>
+      <div id="grad-preview" style="height:64px;border-radius:14px;transition:background .4s;display:flex;align-items:center;justify-content:center">
+        <span id="grad-title-preview" style="color:#fff;font-weight:800;font-size:18px;text-shadow:0 1px 4px rgba(0,0,0,.3)">KamJodo</span>
+      </div>
+    </div>
+
+    <!-- Color pickers -->
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:18px">
+
+      <!-- Primary -->
+      <div>
+        <div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px">Primary</div>
+        <div style="position:relative;display:flex;flex-direction:column;align-items:center;gap:8px">
+          <div style="position:relative;width:100%">
+            <div id="cp-p-preview" style="height:52px;border-radius:12px;cursor:pointer;border:2px solid rgba(0,0,0,.08);transition:transform .15s" onclick="document.getElementById('cp-p').click()" title="Click to pick color"></div>
+            <input type="color" id="cp-p" style="position:absolute;opacity:0;width:0;height:0" oninput="syncFromPicker('p')">
+            <span class="material-icons-round" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);color:rgba(255,255,255,.8);font-size:18px;pointer-events:none">colorize</span>
+          </div>
+          <input id="sp" type="text" placeholder="#7A0000" oninput="syncFromHex('p')" style="width:100%;padding:8px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;outline:none;font-family:monospace"/>
+        </div>
+      </div>
+
+      <!-- Secondary -->
+      <div>
+        <div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px">Secondary</div>
+        <div style="position:relative;display:flex;flex-direction:column;align-items:center;gap:8px">
+          <div style="position:relative;width:100%">
+            <div id="cp-s-preview" style="height:52px;border-radius:12px;cursor:pointer;border:2px solid rgba(0,0,0,.08);transition:transform .15s" onclick="document.getElementById('cp-s').click()" title="Click to pick color"></div>
+            <input type="color" id="cp-s" style="position:absolute;opacity:0;width:0;height:0" oninput="syncFromPicker('s')">
+            <span class="material-icons-round" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);color:rgba(255,255,255,.8);font-size:18px;pointer-events:none">colorize</span>
+          </div>
+          <input id="ss" type="text" placeholder="#B31217" oninput="syncFromHex('s')" style="width:100%;padding:8px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;outline:none;font-family:monospace"/>
+        </div>
+      </div>
+
+      <!-- Tertiary -->
+      <div>
+        <div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px">Tertiary</div>
+        <div style="position:relative;display:flex;flex-direction:column;align-items:center;gap:8px">
+          <div style="position:relative;width:100%">
+            <div id="cp-t-preview" style="height:52px;border-radius:12px;cursor:pointer;border:2px solid rgba(0,0,0,.08);transition:transform .15s" onclick="document.getElementById('cp-t').click()" title="Click to pick color"></div>
+            <input type="color" id="cp-t" style="position:absolute;opacity:0;width:0;height:0" oninput="syncFromPicker('t')">
+            <span class="material-icons-round" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);color:rgba(255,255,255,.8);font-size:18px;pointer-events:none">colorize</span>
+          </div>
+          <input id="ste" type="text" placeholder="#FF5F6D" oninput="syncFromHex('t')" style="width:100%;padding:8px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;outline:none;font-family:monospace"/>
+        </div>
+      </div>
+    </div>
+
+    <!-- Preset Palettes -->
+    <div style="margin-bottom:20px">
+      <div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:10px">Quick Palettes</div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px" id="palette-grid"></div>
+    </div>
+
+    <div style="display:flex;justify-content:flex-end;gap:8px">
+      <button class="btn btn-ghost" onclick="loadTheme()" style="font-size:13px"><span class="material-icons-round mi">refresh</span> Reset</button>
+      <button class="btn btn-primary" id="save-btn" onclick="saveTheme()">
+        <span class="material-icons-round mi">save</span> Save Theme
+      </button>
+    </div>
+  </div>
+  <div class="card">
+    <div class="panel-title">Moderation Settings</div>
+    <div class="tog-row"><span>Enable new user approvals</span><label class="sw"><input type="checkbox" checked><span class="sl"></span></label></div>
+    <div class="tog-row"><span>Allow category creation from app</span><label class="sw"><input type="checkbox" checked><span class="sl"></span></label></div>
+    <div class="tog-row"><span>Show verified badges on profiles</span><label class="sw"><input type="checkbox" checked><span class="sl"></span></label></div>
+    <div class="tog-row"><span>Enable featured jobs banner</span><label class="sw"><input type="checkbox" checked><span class="sl"></span></label></div>
+    <div class="tog-row"><span>Publish maintenance notice</span><label class="sw"><input type="checkbox"><span class="sl"></span></label></div>
+    <div class="tog-row"><span>Send push notifications</span><label class="sw"><input type="checkbox" checked><span class="sl"></span></label></div>
+  </div>
+</section>
+
+</div></main></div>
+<div id="toast"></div>
+<script>
+const BASE = (window.location.origin.includes('localhost') || window.location.origin.includes('127.0.0.1'))
+  ? 'http://localhost:4000'
+  : window.location.origin;
+const PAGES=['dashboard','users','categories','settings'];
+function goTo(id){
+  PAGES.forEach(p=>{
+    document.getElementById('page-'+p).classList.remove('active');
+    const nb=document.getElementById('nb-'+p);
+    nb.classList.remove('active');
+    const pip=nb.querySelector('.nav-pip');
+    if(pip)pip.style.opacity='0';
+  });
+  document.getElementById('page-'+id).classList.add('active');
+  const nb=document.getElementById('nb-'+id);
+  nb.classList.add('active');
+  const pip=nb.querySelector('.nav-pip');
+  if(pip)pip.style.opacity='1';
+}
+let _tt;
+function toast(msg,type='',dur=3000){
+  clearTimeout(_tt);
+  const el=document.getElementById('toast');
+  el.textContent=msg;el.className='show '+(type||'');
+  _tt=setTimeout(()=>el.classList.remove('show'),dur);
+}
+const ICONS={taxi:'local_taxi',plumbing:'plumbing',electric:'electrical_services',tools:'build',school:'school',more:'category',user:'person'};
+let cats=[];
+async function loadCategories(){
+  document.getElementById('cat-count-label').textContent='Loading…';
+  document.getElementById('cat-search-bar').style.display='none';
+  document.getElementById('cat-wrap').innerHTML='<div class="skel" style="height:36px;width:110px;margin:4px;border-radius:999px"></div>'.repeat(6);
+  try{
+    const r=await fetch(`${BASE}/categories`);
+    const d=await r.json();
+    cats=(d.categories||[]).filter(c=>typeof c==='object'&&c.name);
+    renderCategories();updateCount();
+  }catch{
+    document.getElementById('cat-count-label').textContent='Backend offline';
+    document.getElementById('cat-wrap').innerHTML='<div class="empty"><span class="material-icons-round mi">cloud_off</span><p>Could not reach backend at localhost:4000</p></div>';
+  }
+}
+function renderCategories(){
+  const q=(document.getElementById('cat-search')?.value||'').toLowerCase();
+  const f=q?cats.filter(c=>c.name.toLowerCase().includes(q)):cats;
+  const wrap=document.getElementById('cat-wrap');
+  document.getElementById('cat-count-label').textContent=f.length?`${f.length} categor${f.length===1?'y':'ies'}`:'';
+  document.getElementById('cat-search-bar').style.display=cats.length>4?'flex':'none';
+  if(!f.length){wrap.innerHTML=`<div class="empty"><span class="material-icons-round mi">${q?'search_off':'category'}</span><p>${q?`No match for "${escH(q)}"`:' No categories yet.'}</p></div>`;return;}
+  wrap.innerHTML=f.map(c=>`
+    <div class="cat-chip">
+      <div class="cat-av">
+        ${c.imageUrl?`<img src="${escA(c.imageUrl)}" onerror="this.parentElement.innerHTML='<span class=\\'material-icons-round mi\\'>${ICONS[c.iconKey]||'category'}</span>'">`
+        :`<span class="material-icons-round mi">${ICONS[c.iconKey]||'category'}</span>`}
+      </div>
+      ${escH(c.name)}
+      <button class="cat-del" onclick="deleteCat('${escA(c.name)}')" title="Delete"><span class="material-icons-round mi">close</span></button>
+    </div>`).join('');
+}
+function updateCount(){
+  const n=cats.length;
+  document.getElementById('sb-count').textContent=n||'0';
+  document.getElementById('dash-count').textContent=n||'0';
+}
+async function addCat(){
+  const name=document.getElementById('cn').value.trim();
+  const icon=document.getElementById('ci').value;
+  const image=document.getElementById('cimg').value.trim();
+  if(!name){toast('Category name is required','err');document.getElementById('cn').focus();return;}
+  const btn=document.getElementById('cat-btn');
+  btn.innerHTML='<span class="spin"></span> Adding…';btn.disabled=true;
+  try{
+    const r=await fetch(`${BASE}/categories`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,iconKey:icon,imageUrl:image})});
+    const d=await r.json();
+    if(!r.ok)throw new Error(d.message||'Failed');
+    document.getElementById('cn').value='';document.getElementById('cimg').value='';document.getElementById('ci').value='taxi';
+    await loadCategories();toast(`✓ "${name}" added`,'ok');
+  }catch(e){toast('✗ '+e.message,'err');}
+  finally{btn.innerHTML='<span class="material-icons-round mi">add</span> Add Category';btn.disabled=false;}
+}
+async function deleteCat(name){
+  if(!confirm(`Delete category "${name}"?`))return;
+  try{
+    await fetch(`${BASE}/categories/${encodeURIComponent(name)}`,{method:'DELETE'});
+  }catch{}
+  cats=cats.filter(c=>c.name!==name);
+  renderCategories();updateCount();
+  toast(`✓ "${name}" removed`,'ok');
+}
+let users=[
+  {name:'Aman Kumar',role:'Driver',phone:'+91 98765 43210',status:'pending'},
+  {name:'Sana Khan',role:'Teacher',phone:'+91 87654 32109',status:'pending'},
+  {name:'Rahul Mehta',role:'Electrician',phone:'+91 76543 21098',status:'pending'},
+  {name:'Imran Ali',role:'Plumber',phone:'+91 65432 10987',status:'pending'},
+  {name:'Priya Sharma',role:'Cook',phone:'+91 54321 09876',status:'verified'},
+  {name:'Rohit Das',role:'Mechanic',phone:'+91 43210 98765',status:'rejected'},
+];
+let userFilter='all';
+function filterUsers(f){
+  userFilter=f;
+  ['all','pending','verified','rejected'].forEach(s=>{
+    const b=document.getElementById('uf-'+s);
+    b.style.borderColor=s===f?'var(--s)':'';
+    b.style.color=s===f?'var(--s)':'';
+  });
+  renderUsers();
+}
+function renderUsers(){
+  const list=userFilter==='all'?users:users.filter(u=>u.status===userFilter);
+  const wrap=document.getElementById('users-list');
+  if(!list.length){wrap.innerHTML=`<div class="empty"><span class="material-icons-round mi">person_off</span><p>No ${userFilter==='all'?'':userFilter+' '}users.</p></div>`;return;}
+  wrap.innerHTML=list.map(u=>{
+    const i=users.indexOf(u);const pend=u.status==='pending';
+    return`<div class="user-card">
+      <div class="u-av">${escH(u.name[0])}</div>
+      <div style="flex:1;min-width:0">
+        <div class="u-name">${escH(u.name)}</div>
+        <div class="u-role">${escH(u.role)} · ${escH(u.phone)}</div>
+      </div>
+      <div class="u-right">
+        <span class="badge badge-${u.status}">${cap(u.status)}</span>
+        <div style="display:flex;gap:7px">
+          <button class="btn btn-ghost btn-sm" onclick="setUser(${i},'rejected')" ${pend?'':'disabled style="opacity:.35;cursor:not-allowed"'}>Reject</button>
+          <button class="btn btn-ok btn-sm" onclick="setUser(${i},'verified')" ${pend?'':'disabled style="opacity:.35;cursor:not-allowed"'}>Verify</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+  const pend=users.filter(u=>u.status==='pending').length;
+  const badge=document.getElementById('nb-badge');
+  badge.textContent=pend||'';badge.style.display=pend?'':'none';
+}
+function setUser(i,status){users[i]={...users[i],status};renderUsers();toast(status==='verified'?`✓ ${users[i].name} verified`:`✗ ${users[i].name} rejected`,status==='verified'?'ok':'err');}
+/* ── PALETTES ── */
+const PALETTES=[
+  {name:'KamJodo',p:'#7A0000',s:'#B31217',t:'#FF5F6D'},
+  {name:'Ocean',p:'#0C2340',s:'#1565C0',t:'#42A5F5'},
+  {name:'Forest',p:'#1B5E20',s:'#2E7D32',t:'#66BB6A'},
+  {name:'Sunset',p:'#E65100',s:'#F57C00',t:'#FFB74D'},
+  {name:'Royal',p:'#311B92',s:'#512DA8',t:'#9575CD'},
+  {name:'Rose',p:'#880E4F',s:'#C2185B',t:'#F06292'},
+  {name:'Teal',p:'#004D40',s:'#00796B',t:'#4DB6AC'},
+  {name:'Slate',p:'#1C2B3A',s:'#2D4356',t:'#546E7A'},
+  {name:'Amber',p:'#FF6F00',s:'#FF8F00',t:'#FFD54F'},
+  {name:'Indigo',p:'#1A237E',s:'#283593',t:'#5C6BC0'},
+  {name:'Coral',p:'#BF360C',s:'#E64A19',t:'#FF7043'},
+  {name:'Mint',p:'#004D40',s:'#00695C',t:'#26A69A'},
+];
+function buildPalettes(){
+  const g=document.getElementById('palette-grid');
+  if(!g)return;
+  g.innerHTML=PALETTES.map((pal,i)=>`
+    <div onclick="applyPalette(${i})" title="${pal.name}" style="
+      display:flex;align-items:center;gap:0;border-radius:10px;overflow:hidden;
+      cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,.12);transition:transform .15s;
+      border:2px solid transparent;" id="pal-${i}"
+      onmouseenter="this.style.transform='scale(1.06)'" onmouseleave="this.style.transform=''">
+      <div style="width:24px;height:36px;background:${pal.p}"></div>
+      <div style="width:24px;height:36px;background:${pal.s}"></div>
+      <div style="width:24px;height:36px;background:${pal.t}"></div>
+    </div>`).join('');
+}
+function applyPalette(i){
+  const pal=PALETTES[i];
+  document.getElementById('sp').value=pal.p;
+  document.getElementById('ss').value=pal.s;
+  document.getElementById('ste').value=pal.t;
+  syncAllPickers();
+  updatePreview();
+  // highlight selected
+  document.querySelectorAll('[id^="pal-"]').forEach(el=>el.style.border='2px solid transparent');
+  document.getElementById('pal-'+i).style.border='2px solid var(--s)';
+}
+/* ── COLOR SYNC ── */
+function syncFromPicker(id){
+  const pickerMap={p:'cp-p',s:'cp-s',t:'cp-t'};
+  const hexMap={p:'sp',s:'ss',t:'ste'};
+  document.getElementById(hexMap[id]).value=document.getElementById(pickerMap[id]).value;
+  updatePreview();
+}
+function syncFromHex(id){
+  const hexMap={p:'sp',s:'ss',t:'ste'};
+  const pickerMap={p:'cp-p',s:'cp-s',t:'cp-t'};
+  const val=document.getElementById(hexMap[id]).value.trim();
+  if(/^#[0-9a-fA-F]{6}$/.test(val))document.getElementById(pickerMap[id]).value=val;
+  updatePreview();
+}
+function syncAllPickers(){
+  ['p','s','t'].forEach(id=>{
+    const hexMap={p:'sp',s:'ss',t:'ste'};
+    const pickerMap={p:'cp-p',s:'cp-s',t:'cp-t'};
+    const val=document.getElementById(hexMap[id]).value.trim();
+    if(/^#[0-9a-fA-F]{6}$/.test(val))document.getElementById(pickerMap[id]).value=val;
+  });
+}
+function updatePreview(){
+  const p=document.getElementById('sp').value||'#7A0000';
+  const s=document.getElementById('ss').value||'#B31217';
+  const t=document.getElementById('ste').value||'#FF5F6D';
+  const title=document.getElementById('st').value||'KamJodo';
+  // color preview boxes
+  document.getElementById('cp-p-preview').style.background=p;
+  document.getElementById('cp-s-preview').style.background=s;
+  document.getElementById('cp-t-preview').style.background=t;
+  // gradient preview bar
+  const grad=document.getElementById('grad-preview');
+  if(grad)grad.style.background=`linear-gradient(135deg,${p},${s},${t})`;
+  const tp=document.getElementById('grad-title-preview');
+  if(tp)tp.textContent=title;
+}
+async function loadTheme(){
+  try{
+    const r=await fetch(`${BASE}/theme`);const d=await r.json();
+    document.getElementById('st').value=d.appTitle||'KamJodo';
+    document.getElementById('sp').value=d.primary||'#7A0000';
+    document.getElementById('ss').value=d.secondary||'#B31217';
+    document.getElementById('ste').value=d.tertiary||'#FF5F6D';
+    syncAllPickers();updatePreview();
+  }catch{}
+}
+function updateSwatches(){updatePreview();}
+async function saveTheme(){
+  const btn=document.getElementById('save-btn');
+  btn.innerHTML='<span class="spin"></span> Saving…';btn.disabled=true;
+  try{
+    const r=await fetch(`${BASE}/theme`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({appTitle:document.getElementById('st').value.trim(),primary:document.getElementById('sp').value.trim(),secondary:document.getElementById('ss').value.trim(),tertiary:document.getElementById('ste').value.trim()})});
+    if(!r.ok)throw new Error('Save failed');
+    toast('✓ Theme saved — frontend updates automatically','ok');
+  }catch(e){toast('✗ '+e.message,'err');}
+  finally{btn.innerHTML='<span class="material-icons-round mi">save</span> Save Theme';btn.disabled=false;}
+}
+function syncAll(){loadCategories();loadTheme();toast('↻ Synced');}
+function escH(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function escA(s){return String(s).replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
+function cap(s){return s.charAt(0).toUpperCase()+s.slice(1);}
+buildPalettes();updatePreview();loadCategories();loadTheme();renderUsers();filterUsers('all');
+document.getElementById('st').addEventListener('input',updatePreview);
+</script>
+</body>
+</html>
