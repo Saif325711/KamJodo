@@ -82,10 +82,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isWorker = widget.role == 'worker';
-    final roleLabel = isWorker ? 'Worker Mode' : 'Customer Mode';
-    final roleEmoji = isWorker ? '🔧' : '🙋';
-
     return Scaffold(
       backgroundColor: const Color(0xFFF7F7F7),
       appBar: AppBar(
