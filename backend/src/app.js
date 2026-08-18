@@ -163,6 +163,34 @@ app.post('/categories', async (req, res, next) => {
   }
 });
 
+// DELETE /categories/:name
+app.delete('/categories/:name', async (req, res, next) => {
+  try {
+    const name = String(req.params.name || '').trim();
+    if (!name) {
+      return res.status(400).json({ message: 'Category name is required.' });
+    }
+
+    if (getIsConnected()) {
+      await Category.deleteOne({ name: { $regex: new RegExp(`^${name}$`, 'i') } });
+      const nextCategories = await Category.find().sort({ createdAt: -1 }).lean();
+      return res.json({
+        message: 'Category deleted successfully.',
+        categories: nextCategories.map((c) => ({ name: c.name, iconKey: c.iconKey, imageUrl: c.imageUrl })),
+      });
+    }
+
+    const store = readStore();
+    const nextCategories = store.categories.filter(
+      (c) => c.name.toLowerCase() !== name.toLowerCase(),
+    );
+    writeStore({ categories: nextCategories, theme: store.theme });
+    return res.json({ message: 'Category deleted successfully.', categories: nextCategories });
+  } catch (error) {
+    next(error);
+  }
+});
+
 // GET /theme
 app.get('/theme', async (_req, res, next) => {
   try {

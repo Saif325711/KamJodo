@@ -187,6 +187,10 @@ input:checked+.sl::before{transform:translateX(19px)}
 
 <main class="main">
 <div class="main-inner">
+<div id="db-banner" class="banner" style="display:none;margin-bottom:18px;padding:12px 16px;border-radius:12px;background:#FEF3C7;color:#B45309;border:1px solid #FDE68A;font-size:13px;font-weight:600;align-items:center;gap:10px">
+  <span class="material-icons-round" style="font-size:20px">warning</span>
+  <span>Backend is running in JSON fallback mode. Categories &amp; theme may not persist reliably across app sessions. Please set <code>MONGODB_URI</code> in Vercel environment variables.</span>
+</div>
 
 <!-- DASHBOARD -->
 <section class="page active" id="page-dashboard">
@@ -394,6 +398,22 @@ input:checked+.sl::before{transform:translateX(19px)}
 <script>
 const BASE = 'https://kam-jodo.vercel.app';
 const PAGES=['dashboard','users','categories','settings'];
+async function checkBackendMode(){
+  try{
+    const r=await fetch(`${BASE}/health`);
+    const d=await r.json();
+    const banner=document.getElementById('db-banner');
+    if(d.database && !d.database.includes('MongoDB')){
+      banner.style.display='flex';
+    } else {
+      banner.style.display='none';
+    }
+  }catch{
+    const banner=document.getElementById('db-banner');
+    banner.style.display='flex';
+    banner.querySelector('span:last-child').textContent='Could not reach backend health endpoint.';
+  }
+}
 function goTo(id){
   PAGES.forEach(p=>{
     document.getElementById('page-'+p).classList.remove('active');
@@ -624,7 +644,7 @@ function syncAll(){loadCategories();loadTheme();toast('↻ Synced');}
 function escH(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 function escA(s){return String(s).replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
 function cap(s){return s.charAt(0).toUpperCase()+s.slice(1);}
-buildPalettes();updatePreview();loadCategories();loadTheme();renderUsers();filterUsers('all');
+buildPalettes();updatePreview();loadCategories();loadTheme();renderUsers();filterUsers('all');checkBackendMode();
 document.getElementById('st').addEventListener('input',updatePreview);
 </script>
 </body>
