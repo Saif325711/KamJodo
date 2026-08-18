@@ -5,6 +5,7 @@ import 'storage_service.dart';
 
 class AuthService {
   static String get baseUrl {
+    if (kReleaseMode) return 'https://kam-jodo.vercel.app';
     if (kIsWeb) return 'http://localhost:5000';
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
