@@ -465,8 +465,8 @@ class _CategoryBubble extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 6),
-          SizedBox(
-            width: 64,
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 2),
             child: Text(
               label,
               textAlign: TextAlign.center,
