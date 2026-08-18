@@ -3,19 +3,10 @@ const router = express.Router();
 const Category = require('../../models/Category');
 const { getIsConnected } = require('../../config/db');
 const { authenticate, requireRole } = require('../../middleware/auth');
-const fs = require('fs');
-const path = require('path');
-
-const storePath = path.join(__dirname, '..', '..', '..', 'data', 'store.json');
+const { readStore } = require('../../utils/store');
 
 function readLocalCategories() {
-  try {
-    const raw = fs.readFileSync(storePath, 'utf8');
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed.categories) ? parsed.categories : [];
-  } catch {
-    return [];
-  }
+  return readStore().categories;
 }
 
 // GET /api/v1/categories  — Public

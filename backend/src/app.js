@@ -9,52 +9,9 @@ require('dotenv').config();
 const { connectDB, getIsConnected } = require('./config/db');
 const Category = require('./models/Category');
 const Theme = require('./models/Theme');
+const { readStore, writeStore } = require('./utils/store');
 
 const app = express();
-const storePath = path.join(__dirname, '..', 'data', 'store.json');
-
-const defaultStore = {
-  categories: [
-    { name: 'Driver', iconKey: 'taxi', imageUrl: '' },
-    { name: 'Plumber', iconKey: 'plumbing', imageUrl: '' },
-    { name: 'Electrician', iconKey: 'electric', imageUrl: '' },
-    { name: 'Mechanic', iconKey: 'tools', imageUrl: '' },
-    { name: 'Teacher', iconKey: 'school', imageUrl: '' },
-  ],
-  theme: {
-    appTitle: 'KamJodo',
-    primary: '#7A0000',
-    secondary: '#B31217',
-    tertiary: '#FFFF5F6D',
-  },
-};
-
-function ensureStore() {
-  const directoryPath = path.dirname(storePath);
-  if (!fs.existsSync(directoryPath)) {
-    fs.mkdirSync(directoryPath, { recursive: true });
-  }
-
-  if (!fs.existsSync(storePath)) {
-    fs.writeFileSync(storePath, JSON.stringify(defaultStore, null, 2));
-  }
-}
-
-function readStore() {
-  ensureStore();
-  const raw = fs.readFileSync(storePath, 'utf8');
-  const parsed = JSON.parse(raw);
-
-  return {
-    categories: Array.isArray(parsed.categories) ? parsed.categories : defaultStore.categories,
-    theme: parsed.theme || defaultStore.theme,
-  };
-}
-
-function writeStore(store) {
-  ensureStore();
-  fs.writeFileSync(storePath, JSON.stringify(store, null, 2));
-}
 
 function normalizeHexColor(value, fallback) {
   const text = String(value || '').trim();

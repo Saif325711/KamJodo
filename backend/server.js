@@ -2,7 +2,7 @@ const app = require('./src/app');
 const { connectDB } = require('./src/config/db');
 
 const PORT = process.env.PORT || 5000;
-const HOST = '0.0.0.0';
+const HOST = process.env.HOST || '::';
 
 async function startServer() {
   // Connect to MongoDB Atlas (if MONGODB_URI is provided in environment)

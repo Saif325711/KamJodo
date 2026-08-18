@@ -392,9 +392,7 @@ input:checked+.sl::before{transform:translateX(19px)}
 </div></main></div>
 <div id="toast"></div>
 <script>
-const BASE = (window.location.origin.includes('localhost') || window.location.origin.includes('127.0.0.1'))
-  ? 'http://localhost:4000'
-  : window.location.origin;
+const BASE = 'https://kam-jodo.vercel.app';
 const PAGES=['dashboard','users','categories','settings'];
 function goTo(id){
   PAGES.forEach(p=>{
@@ -430,7 +428,7 @@ async function loadCategories(){
     renderCategories();updateCount();
   }catch{
     document.getElementById('cat-count-label').textContent='Backend offline';
-    document.getElementById('cat-wrap').innerHTML='<div class="empty"><span class="material-icons-round mi">cloud_off</span><p>Could not reach backend at localhost:4000</p></div>';
+    document.getElementById('cat-wrap').innerHTML='<div class="empty"><span class="material-icons-round mi">cloud_off</span><p>Could not reach backend at kam-jodo.vercel.app</p></div>';
   }
 }
 function renderCategories(){
