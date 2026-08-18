@@ -146,7 +146,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 controller: _nameController,
                 style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w500),
                 decoration: InputDecoration(
-                  hintText: isWorker ? 'e.g. Ramesh Kumar' : 'e.g. Amit Sharma',
+                  hintText: 'e.g. Amit Sharma',
                   hintStyle: GoogleFonts.poppins(color: Colors.grey.shade400, fontSize: 14),
                   prefixIcon: Icon(Icons.person_outline, color: widget.secondary),
                   border: InputBorder.none,
