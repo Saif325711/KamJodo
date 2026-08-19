@@ -1,0 +1,570 @@
+import 'dart:math' as math;
+import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+import '../services/auth_service.dart';
+import '../theme.dart';
+import 'app_shell.dart';
+import 'login_screen.dart';
+
+// ─── Entry Point ────────────────────────────────────────────────────────────
+
+class SplashScreen extends StatefulWidget {
+  const SplashScreen({super.key});
+
+  @override
+  State<SplashScreen> createState() => _SplashScreenState();
+}
+
+class _SplashScreenState extends State<SplashScreen>
+    with TickerProviderStateMixin {
+  // Logo animations
+  late AnimationController _logoCtrl;
+  late Animation<double> _logoScale;
+  late Animation<double> _logoFade;
+  late Animation<double> _logoGlow;
+
+  // Text animations
+  late AnimationController _textCtrl;
+  late Animation<double> _titleFade;
+  late Animation<Offset> _titleSlide;
+  late Animation<double> _subFade;
+  late Animation<Offset> _subSlide;
+
+  // Badge / pill animation
+  late AnimationController _badgeCtrl;
+  late Animation<double> _badgeFade;
+  late Animation<Offset> _badgeSlide;
+
+  // Shimmer / pulse on logo ring
+  late AnimationController _pulseCtrl;
+  late Animation<double> _pulse;
+
+  // Floating particles
+  late AnimationController _particleCtrl;
+
+  // Bottom progress bar
+  late AnimationController _progressCtrl;
+  late Animation<double> _progress;
+
+  // Particle list (generated once)
+  final List<_Particle> _particles = [];
+  final _rng = math.Random(42);
+
+  @override
+  void initState() {
+    super.initState();
+
+    // ── generate particles ──────────────────────────────────────────────
+    for (int i = 0; i < 18; i++) {
+      _particles.add(_Particle(
+        x: _rng.nextDouble(),
+        y: _rng.nextDouble(),
+        radius: 2 + _rng.nextDouble() * 4,
+        opacity: 0.08 + _rng.nextDouble() * 0.18,
+        speed: 0.3 + _rng.nextDouble() * 0.7,
+        phase: _rng.nextDouble() * math.pi * 2,
+      ));
+    }
+
+    // ── logo controller (0–900 ms) ──────────────────────────────────────
+    _logoCtrl = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 900));
+    _logoScale = CurvedAnimation(
+            parent: _logoCtrl, curve: Curves.elasticOut)
+        .drive(Tween(begin: 0.0, end: 1.0));
+    _logoFade = CurvedAnimation(
+            parent: _logoCtrl, curve: const Interval(0.0, 0.5))
+        .drive(Tween(begin: 0.0, end: 1.0));
+    _logoGlow = CurvedAnimation(
+            parent: _logoCtrl, curve: const Interval(0.4, 1.0))
+        .drive(Tween(begin: 0.0, end: 1.0));
+
+    // ── text controller (starts at 400 ms, duration 700 ms) ─────────────
+    _textCtrl = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 700));
+    _titleFade = CurvedAnimation(
+            parent: _textCtrl,
+            curve: const Interval(0.0, 0.6, curve: Curves.easeOut))
+        .drive(Tween(begin: 0.0, end: 1.0));
+    _titleSlide = CurvedAnimation(
+            parent: _textCtrl,
+            curve: const Interval(0.0, 0.7, curve: Curves.easeOut))
+        .drive(Tween(begin: const Offset(0, 0.4), end: Offset.zero));
+    _subFade = CurvedAnimation(
+            parent: _textCtrl,
+            curve: const Interval(0.3, 1.0, curve: Curves.easeOut))
+        .drive(Tween(begin: 0.0, end: 1.0));
+    _subSlide = CurvedAnimation(
+            parent: _textCtrl,
+            curve: const Interval(0.3, 1.0, curve: Curves.easeOut))
+        .drive(Tween(begin: const Offset(0, 0.5), end: Offset.zero));
+
+    // ── badge pill (starts at 900 ms) ───────────────────────────────────
+    _badgeCtrl = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 500));
+    _badgeFade = CurvedAnimation(parent: _badgeCtrl, curve: Curves.easeOut)
+        .drive(Tween(begin: 0.0, end: 1.0));
+    _badgeSlide = CurvedAnimation(parent: _badgeCtrl, curve: Curves.easeOut)
+        .drive(Tween(begin: const Offset(0, 0.6), end: Offset.zero));
+
+    // ── pulse ring (looping) ─────────────────────────────────────────────
+    _pulseCtrl = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 1800))
+      ..repeat(reverse: true);
+    _pulse = CurvedAnimation(parent: _pulseCtrl, curve: Curves.easeInOut)
+        .drive(Tween(begin: 0.95, end: 1.05));
+
+    // ── particle float (looping) ─────────────────────────────────────────
+    _particleCtrl =
+        AnimationController(vsync: this, duration: const Duration(seconds: 6))
+          ..repeat();
+
+    // ── progress bar (total 2800 ms) ─────────────────────────────────────
+    _progressCtrl = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 2600));
+    _progress = CurvedAnimation(parent: _progressCtrl, curve: Curves.easeInOut)
+        .drive(Tween(begin: 0.0, end: 1.0));
+
+    // ── sequence kick-off ─────────────────────────────────────────────────
+    _logoCtrl.forward();
+    _progressCtrl.forward();
+
+    Future.delayed(const Duration(milliseconds: 400), () {
+      if (mounted) _textCtrl.forward();
+    });
+    Future.delayed(const Duration(milliseconds: 900), () {
+      if (mounted) _badgeCtrl.forward();
+    });
+    Future.delayed(const Duration(milliseconds: 2800), _navigate);
+  }
+
+  @override
+  void dispose() {
+    _logoCtrl.dispose();
+    _textCtrl.dispose();
+    _badgeCtrl.dispose();
+    _pulseCtrl.dispose();
+    _particleCtrl.dispose();
+    _progressCtrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _navigate() async {
+    if (!mounted) return;
+    final loggedIn = await AuthService.isLoggedIn();
+    if (!mounted) return;
+    if (loggedIn) {
+      // Verify the token is still valid with backend (clears stale local tokens on 401)
+      final user = await AuthService.getMe();
+      if (!mounted) return;
+      // If getMe cleared the token (returned null after 401), route to login
+      final stillLoggedIn = await AuthService.isLoggedIn();
+      Navigator.of(context).pushReplacement(
+        PageRouteBuilder(
+          pageBuilder: (_, a, __) =>
+              (stillLoggedIn && user != null)
+                  ? const AppShell()
+                  : const LoginScreen(),
+          transitionsBuilder: (_, anim, __, child) =>
+              FadeTransition(opacity: anim, child: child),
+          transitionDuration: const Duration(milliseconds: 600),
+        ),
+      );
+    } else {
+      Navigator.of(context).pushReplacement(
+        PageRouteBuilder(
+          pageBuilder: (_, a, __) => const LoginScreen(),
+          transitionsBuilder: (_, anim, __, child) =>
+              FadeTransition(opacity: anim, child: child),
+          transitionDuration: const Duration(milliseconds: 600),
+        ),
+      );
+    }
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  @override
+  Widget build(BuildContext context) {
+    final size = MediaQuery.of(context).size;
+
+    return Scaffold(
+      body: Stack(
+        children: [
+          // ── 1. Rich 4-stop gradient background ──────────────────────
+          Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                stops: [0.0, 0.35, 0.65, 1.0],
+                colors: [
+                  Color(0xFF1A0A00),
+                  Color(0xFF6B2200),
+                  Color(0xFFBF4500),
+                  Color(0xFFFF8C00),
+                ],
+              ),
+            ),
+          ),
+
+          // ── 2. Radial centre glow ────────────────────────────────────
+          Center(
+            child: AnimatedBuilder(
+              animation: _logoGlow,
+              builder: (_, __) => Container(
+                width: size.width * 1.2,
+                height: size.width * 1.2,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: RadialGradient(
+                    colors: [
+                      kCapTertiary.withValues(alpha: 0.18 * _logoGlow.value),
+                      Colors.transparent,
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+
+          // ── 3. Floating particles ─────────────────────────────────────
+          AnimatedBuilder(
+            animation: _particleCtrl,
+            builder: (_, __) {
+              return CustomPaint(
+                size: size,
+                painter: _ParticlePainter(_particles, _particleCtrl.value),
+              );
+            },
+          ),
+
+          // ── 4. Main content ──────────────────────────────────────────
+          SafeArea(
+            child: Column(
+              children: [
+                const Spacer(flex: 3),
+
+                // ── Logo block — app-icon style ───────────────────────
+                AnimatedBuilder(
+                  animation: Listenable.merge([_logoCtrl, _pulseCtrl]),
+                  builder: (_, __) {
+                    return FadeTransition(
+                      opacity: _logoFade,
+                      child: ScaleTransition(
+                        scale: _logoScale,
+                        child: ScaleTransition(
+                          scale: _pulse,
+                          child: Stack(
+                            clipBehavior: Clip.none,
+                            alignment: Alignment.center,
+                            children: [
+                              // ── Outer stroke outline ring ─────────────
+                              Container(
+                                width: 132,
+                                height: 132,
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(38),
+                                  border: Border.all(
+                                    color: Colors.white.withValues(alpha: 0.28),
+                                    width: 1.5,
+                                  ),
+                                ),
+                              ),
+                              // ── Outer soft glow ───────────────────────
+                              Container(
+                                width: 132,
+                                height: 132,
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(38),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: kCapTertiary.withValues(alpha: 0.55),
+                                      blurRadius: 48,
+                                      spreadRadius: 4,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              // ── Main icon card (solid white) ──────────
+                              Container(
+                                width: 108,
+                                height: 108,
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(28),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withValues(alpha: 0.25),
+                                      blurRadius: 24,
+                                      offset: const Offset(0, 10),
+                                    ),
+                                    BoxShadow(
+                                      color: kCapSecondary.withValues(alpha: 0.3),
+                                      blurRadius: 16,
+                                      offset: const Offset(0, 4),
+                                    ),
+                                  ],
+                                ),
+                                child: const Center(
+                                  child: Text('🧢',
+                                      style: TextStyle(fontSize: 54)),
+                                ),
+                              ),
+                              // ── Orange accent dot badge (bottom-right) ─
+                              Positioned(
+                                right: 8,
+                                bottom: 8,
+                                child: Container(
+                                  width: 20,
+                                  height: 20,
+                                  decoration: BoxDecoration(
+                                    color: kCapSecondary,
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                        color: const Color(0xFF1A0A00),
+                                        width: 2.5),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: kCapTertiary
+                                            .withValues(alpha: 0.7),
+                                        blurRadius: 8,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+
+                const SizedBox(height: 40),
+
+                // ── App name: split-weight "KamJodo" + "CAP" ─────────
+                SlideTransition(
+                  position: _titleSlide,
+                  child: FadeTransition(
+                    opacity: _titleFade,
+                    child: RichText(
+                      text: TextSpan(
+                        children: [
+                          TextSpan(
+                            text: 'KamJodo ',
+                            style: GoogleFonts.poppins(
+                              fontSize: 40,
+                              fontWeight: FontWeight.w800,
+                              color: Colors.white,
+                              letterSpacing: -1.2,
+                              height: 1.0,
+                              shadows: [
+                                Shadow(
+                                  color: Colors.black.withValues(alpha: 0.35),
+                                  blurRadius: 12,
+                                  offset: const Offset(0, 3),
+                                ),
+                              ],
+                            ),
+                          ),
+                          TextSpan(
+                            text: 'CAP',
+                            style: GoogleFonts.poppins(
+                              fontSize: 40,
+                              fontWeight: FontWeight.w800,
+                              color: kCapTertiary,
+                              letterSpacing: -1.2,
+                              height: 1.0,
+                              shadows: [
+                                Shadow(
+                                  color: kCapTertiary.withValues(alpha: 0.5),
+                                  blurRadius: 16,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 14),
+
+                // ── Thin divider line ─────────────────────────────────
+                SlideTransition(
+                  position: _subSlide,
+                  child: FadeTransition(
+                    opacity: _subFade,
+                    child: SizedBox(
+                      width: 48,
+                      child: Divider(
+                        color: kCapTertiary.withValues(alpha: 0.7),
+                        thickness: 2,
+                      ),
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 12),
+
+                // ── Subtitle — spaced uppercase label ────────────────
+                SlideTransition(
+                  position: _subSlide,
+                  child: FadeTransition(
+                    opacity: _subFade,
+                    child: Text(
+                      'WORKER PLATFORM  ·  EARN ON YOUR TERMS',
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.poppins(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.white.withValues(alpha: 0.60),
+                        letterSpacing: 1.8,
+                        height: 1.5,
+                      ),
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 28),
+
+                // ── "Powered by" glass pill badge ────────────────────
+                SlideTransition(
+                  position: _badgeSlide,
+                  child: FadeTransition(
+                    opacity: _badgeFade,
+                    child: const _GlassPill(label: '⚡  Powered by KamJodo'),
+                  ),
+                ),
+
+                const Spacer(flex: 4),
+
+                // ── Progress bar ─────────────────────────────────────
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 48),
+                  child: Column(
+                    children: [
+                      AnimatedBuilder(
+                        animation: _progress,
+                        builder: (_, __) {
+                          return ClipRRect(
+                            borderRadius: BorderRadius.circular(50),
+                            child: LinearProgressIndicator(
+                              value: _progress.value,
+                              minHeight: 3,
+                              backgroundColor:
+                                  Colors.white.withValues(alpha: 0.12),
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                Color.lerp(kCapSecondary, kCapTertiary,
+                                    _progress.value)!,
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        'Getting things ready…',
+                        style: GoogleFonts.poppins(
+                          fontSize: 12,
+                          color: Colors.white.withValues(alpha: 0.45),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 40),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─── Glass Pill ─────────────────────────────────────────────────────────────
+
+class _GlassPill extends StatelessWidget {
+  final String label;
+  const _GlassPill({required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 9),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(50),
+        gradient: LinearGradient(
+          colors: [
+            Colors.white.withValues(alpha: 0.18),
+            Colors.white.withValues(alpha: 0.07),
+          ],
+        ),
+        border: Border.all(
+          color: Colors.white.withValues(alpha: 0.25),
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.15),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Text(
+        label,
+        style: GoogleFonts.poppins(
+          fontSize: 13,
+          fontWeight: FontWeight.w500,
+          color: Colors.white.withValues(alpha: 0.90),
+          letterSpacing: 0.3,
+        ),
+      ),
+    );
+  }
+}
+
+// ─── Particle Model ──────────────────────────────────────────────────────────
+
+class _Particle {
+  final double x, y, radius, opacity, speed, phase;
+  const _Particle({
+    required this.x,
+    required this.y,
+    required this.radius,
+    required this.opacity,
+    required this.speed,
+    required this.phase,
+  });
+}
+
+// ─── Particle Painter ────────────────────────────────────────────────────────
+
+class _ParticlePainter extends CustomPainter {
+  final List<_Particle> particles;
+  final double t;
+
+  const _ParticlePainter(this.particles, this.t);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    for (final p in particles) {
+      final dy = math.sin(t * math.pi * 2 * p.speed + p.phase) * 0.04;
+      final dx = math.cos(t * math.pi * 2 * p.speed * 0.7 + p.phase) * 0.02;
+      final cx = (p.x + dx) * size.width;
+      final cy = (p.y + dy) * size.height;
+      final paint = Paint()
+        ..color = Colors.white.withValues(alpha: p.opacity)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2);
+      canvas.drawCircle(Offset(cx, cy), p.radius, paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(_ParticlePainter old) => old.t != t;
+}

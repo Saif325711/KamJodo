@@ -1,21 +1,22 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
+import '../config/app_config.dart';
 import 'storage_service.dart';
 
 class AuthService {
   static String get baseUrl {
-    if (kReleaseMode) return 'https://kam-jodo.vercel.app';
-    if (kIsWeb) return 'http://localhost:5000';
+    if (kReleaseMode) return AppConfig.liveBaseUrl;
+    if (kIsWeb) return AppConfig.localhostUrl;
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
-        return 'http://10.0.2.2:5000';
+        return AppConfig.androidEmulatorUrl;
       case TargetPlatform.iOS:
       case TargetPlatform.windows:
       case TargetPlatform.macOS:
       case TargetPlatform.linux:
       default:
-        return 'http://localhost:5000';
+        return AppConfig.localhostUrl;
     }
   }
 
